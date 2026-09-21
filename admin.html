@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ParcelQuery Admin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="nav"><a class="logo" href="index.html"><b>PQ</b> Parcel<span>Query</span></a><nav><a href="index.html">Public site</a></nav></div></header>
+<main class="wrap section">
+<div id="login" class="panel" style="max-width:520px;margin:50px auto">
+  <small>PRIVATE ADMIN AREA</small>
+  <h2>Manage shipments</h2>
+  <p>Sign in with your authorized ParcelQuery account.</p>
+  <input id="user" type="email" placeholder="Admin email">
+  <input id="pass" type="password" placeholder="Admin password">
+  <button class="primary" id="loginBtn">Sign in</button>
+  <p><small>Protected by Supabase Authentication and Row Level Security.</small></p>
+</div>
+<div id="admin" class="hidden">
+  <div class="row"><div><small>DASHBOARD</small><h2>Shipment management</h2></div><button id="logout">Log out</button></div>
+  <div class="stats"><b id="sTotal">0<small>Total</small></b><b id="sTransit">0<small>In transit</small></b><b id="sOut">0<small>Out for delivery</small></b><b id="sDelivered">0<small>Delivered</small></b><b id="sDelayed">0<small>Delayed</small></b></div>
+  <div class="form"><h3>Add / update shipment</h3><div class="grid">
+    <input id="fTracking" placeholder="Tracking number">
+    <select id="fStatus"><option>Shipment Created</option><option>Picked Up</option><option>In Transit</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option></select>
+    <input id="fLocation" placeholder="Current location"><input id="fOrigin" placeholder="Origin"><input id="fDestination" placeholder="Destination"><input id="fDelivery" placeholder="Estimated delivery (YYYY-MM-DD)">
+    <input id="fService" placeholder="Service"><input id="fWeight" placeholder="Weight"><input id="fPackageType" placeholder="Package type"><input id="fReference" placeholder="Reference"><input id="fRecipient" placeholder="Recipient name"><input id="fMessage" placeholder="Latest update">
+  </div><textarea id="fHistory" placeholder="History: Status | Date/time | Location | Description, one per line"></textarea><button class="primary" id="save">Save shipment</button></div>
+  <div class="form"><div class="row"><h3>Saved shipments</h3><input id="adminSearch" placeholder="Search"></div><div id="table"></div></div>
+</div>
+</main>
+<footer><div class="wrap"><a class="logo" href="index.html"><b>PQ</b> Parcel<span>Query</span></a><p>Private administration.</p></div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
+</body>
+</html>
