@@ -21,12 +21,13 @@
 </div>
 <div id="admin" class="hidden">
   <div class="row"><div><small>DASHBOARD</small><h2>Shipment management</h2></div><button id="logout">Log out</button></div>
-  <div class="stats"><b id="sTotal">0<small>Total</small></b><b id="sTransit">0<small>In transit</small></b><b id="sOut">0<small>Out for delivery</small></b><b id="sDelivered">0<small>Delivered</small></b><b id="sDelayed">0<small>Delayed</small></b></div>
+  <div class="stats"><b id="vTotal">0<small>Visits</small></b><b id="vToday">0<small>Today</small></b><b id="vSupport">0<small>Support clicks</small></b><b id="sTotal">0<small>Total shipments</small></b><b id="sTransit">0<small>In transit</small></b><b id="sOut">0<small>Out for delivery</small></b><b id="sDelivered">0<small>Delivered</small></b><b id="sDelayed">0<small>Delayed</small></b></div>
+  <div class="form"><div class="row"><div><h3>Visitors & support activity</h3><small>Anonymous website activity. This does not reveal a visitor's identity.</small></div><button id="refreshAnalytics">Refresh</button></div><div id="analyticsSummary"></div><div id="visitorTable"></div></div>
   <div class="form"><h3>Add / update shipment</h3><div class="grid">
     <input id="fTracking" placeholder="Tracking number">
     <select id="fStatus"><option>Shipment Created</option><option>Picked Up</option><option>In Transit</option><option>Out for Delivery</option><option>Delivered</option><option>Delayed</option></select>
     <input id="fLocation" placeholder="Current location"><input id="fOrigin" placeholder="Origin"><input id="fDestination" placeholder="Destination"><input id="fDelivery" placeholder="Estimated delivery (YYYY-MM-DD)">
-    <input id="fService" placeholder="Service"><input id="fWeight" placeholder="Weight"><input id="fPackageType" placeholder="Package type"><input id="fReference" placeholder="Reference"><input id="fRecipient" placeholder="Recipient name"><input id="fMessage" placeholder="Latest update">
+    <input id="fService" placeholder="Service"><input id="fWeight" placeholder="Weight"><input id="fPackageType" placeholder="Package type"><input id="fReference" placeholder="Reference"><input id="fRecipient" placeholder="Recipient name"><div class="field"><label for="fMessage">Customer message / latest update</label><textarea id="fMessage" placeholder="Write the message customers should see with this shipment update"></textarea></div>
   </div><textarea id="fHistory" placeholder="History: Status | Date/time | Location | Description, one per line"></textarea><button class="primary" id="save">Save shipment</button></div>
   <div class="form"><div class="row"><h3>Saved shipments</h3><input id="adminSearch" placeholder="Search"></div><div id="table"></div></div>
 </div>

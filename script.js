@@ -68,3 +68,31 @@ $('copyTracking').onclick = () => navigator.clipboard?.writeText($('rTracking').
 $('printBtn').onclick = () => print();
 
 
+
+function getVisitorSessionId() {
+  try {
+    let id = localStorage.getItem('pq_visitor_session');
+    if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)); localStorage.setItem('pq_visitor_session', id); }
+    return id;
+  } catch (_) { return null; }
+}
+
+async function logVisitorEvent(eventType='page_view', target='') {
+  try {
+    await db.from('page_visits').insert([{
+      session_id: getVisitorSessionId(),
+      page_path: location.pathname + location.hash,
+      event_type: eventType,
+      target: target || null,
+      referrer: document.referrer || null,
+      user_agent: navigator.userAgent || null
+    }]);
+  } catch (e) { console.debug('Visitor analytics unavailable', e); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  logVisitorEvent('page_view');
+  document.querySelectorAll('a[href^="https://wa.me/"], a[href^="sms:"], a[href^="mailto:"]').forEach(a => {
+    a.addEventListener('click', () => logVisitorEvent('support_click', a.getAttribute('href')));
+  });
+});

@@ -14,7 +14,7 @@ async function getAdminSession() {
 async function openAdminDashboard() {
   const session = await getAdminSession();
   if (!session) { $('login').classList.remove('hidden'); $('admin').classList.add('hidden'); return; }
-  $('login').classList.add('hidden'); $('admin').classList.remove('hidden'); await render();
+  $('login').classList.add('hidden'); $('admin').classList.remove('hidden'); await render(); await renderAnalytics();
 }
 $('loginBtn').onclick = async () => {
   const email = $('user').value.trim(), password = $('pass').value;
@@ -25,6 +25,21 @@ $('loginBtn').onclick = async () => {
   $('pass').value = ''; await openAdminDashboard();
 };
 $('logout').onclick = async () => { await db.auth.signOut(); await openAdminDashboard(); };
+
+async function renderAnalytics() {
+  const { data: visits, error } = await db.from('page_visits').select('*').order('created_at', {ascending:false}).limit(100);
+  if (error) { $('analyticsSummary').innerHTML = '<p>Analytics table is not configured yet.</p>'; return; }
+  const a = visits || [], start = new Date(); start.setHours(0,0,0,0);
+  const today = a.filter(x => new Date(x.created_at) >= start).length;
+  const support = a.filter(x => x.event_type === 'support_click').length;
+  $('vTotal').firstChild.textContent = a.length;
+  $('vToday').firstChild.textContent = today;
+  $('vSupport').firstChild.textContent = support;
+  $('analyticsSummary').innerHTML = '<p>Showing the latest ' + a.length + ' activity records.</p>';
+  $('visitorTable').innerHTML = a.map(x => `<div class="event"><b>${esc(x.event_type === 'support_click' ? 'Support click' : 'Page visit')}</b><small>${esc(formatAdminDate(x.created_at))} · ${esc(x.page_path || '/')} · ${esc(x.target || '')}</small><small>Session: ${esc((x.session_id || '').slice(0,8))} · Referrer: ${esc(x.referrer || 'Direct')}</small></div>`).join('') || '<p>No visitor activity yet.</p>';
+}
+function formatAdminDate(v) { const d = new Date(v); return Number.isNaN(d.getTime()) ? String(v || '') : d.toLocaleString(); }
+
 async function render() {
   const { data: rows, error } = await db.from('shipments').select('*').order('created_at', {ascending:false});
   if (error) return showError('Could not load shipments: ' + error.message);
@@ -34,9 +49,10 @@ async function render() {
   $('sOut').firstChild.textContent = a.filter(x => x.status === 'Out for Delivery').length;
   $('sDelivered').firstChild.textContent = a.filter(x => x.status === 'Delivered').length;
   $('sDelayed').firstChild.textContent = a.filter(x => x.status === 'Delayed').length;
-  $('table').innerHTML = a.filter(x => JSON.stringify(x).toLowerCase().includes(q)).map(x => `<div class="shipment"><div><b>${esc(x.tracking_number)}</b><small>${esc(x.current_location || '')}</small></div><div>${esc(x.status)}</div><div>${esc(x.estimated_delivery || '')}</div><button class="danger" onclick="delShipment('${x.id}')">Delete</button></div>`).join('') || '<p>No shipments found.</p>';
+  $('table').innerHTML = a.filter(x => JSON.stringify(x).toLowerCase().includes(q)).map(x => `<div class="shipment"><div><b>${esc(x.tracking_number)}</b><small>${esc(x.current_location || '')}</small></div><div>${esc(x.status)}</div><div>${esc(x.estimated_delivery || '')}</div><div class="shipment-message">${esc(x.message || '')}</div></div><button class="danger" onclick="delShipment('${x.id}')">Delete</button></div>`).join('') || '<p>No shipments found.</p>';
 }
 $('adminSearch').oninput = render;
+$('refreshAnalytics').onclick = renderAnalytics;
 function parseEventDate(value) { if (!value) return new Date().toISOString(); const d = new Date(value); return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString(); }
 async function saveShipment() {
   const tracking = $('fTracking').value.trim().toUpperCase();
