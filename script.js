@@ -77,15 +77,36 @@ function getVisitorSessionId() {
   } catch (_) { return null; }
 }
 
+let visitorLocationPromise = null;
+
+async function getApproxVisitorLocation() {
+  if (visitorLocationPromise) return visitorLocationPromise;
+  visitorLocationPromise = fetch('https://ipapi.co/json/', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(x => x ? {
+      city: x.city || null,
+      region: x.region || null,
+      country: x.country_name || x.country || null,
+      timezone: x.timezone || null
+    } : null)
+    .catch(() => null);
+  return visitorLocationPromise;
+}
+
 async function logVisitorEvent(eventType='page_view', target='') {
   try {
+    const loc = await getApproxVisitorLocation();
     await db.from('page_visits').insert([{
       session_id: getVisitorSessionId(),
       page_path: location.pathname + location.hash,
       event_type: eventType,
       target: target || null,
       referrer: document.referrer || null,
-      user_agent: navigator.userAgent || null
+      user_agent: navigator.userAgent || null,
+      city: loc?.city || null,
+      region: loc?.region || null,
+      country: loc?.country || null,
+      timezone: loc?.timezone || null
     }]);
   } catch (e) { console.debug('Visitor analytics unavailable', e); }
 }
