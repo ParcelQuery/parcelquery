@@ -27,18 +27,64 @@ $('loginBtn').onclick = async () => {
 $('logout').onclick = async () => { await db.auth.signOut(); await openAdminDashboard(); };
 
 async function renderAnalytics() {
-  const { data: visits, error } = await db.from('page_visits').select('*').order('created_at', {ascending:false}).limit(100);
-  if (error) { $('analyticsSummary').innerHTML = '<p>Analytics table is not configured yet.</p>'; return; }
-  const a = visits || [], start = new Date(); start.setHours(0,0,0,0);
+  const summary = $('analyticsSummary');
+  const table = $('visitorTable');
+  if (!summary || !table) return;
+
+  summary.innerHTML = '<p>Loading visitor activity...</p>';
+  const { data: visits, error } = await db.from('page_visits').select('*').order('created_at', {ascending:false}).limit(200);
+  if (error) {
+    summary.innerHTML = '<p>Analytics could not be loaded: ' + esc(error.message) + '</p>';
+    table.innerHTML = '';
+    return;
+  }
+
+  const a = visits || [];
+  const start = new Date();
+  start.setHours(0,0,0,0);
   const today = a.filter(x => new Date(x.created_at) >= start).length;
   const support = a.filter(x => x.event_type === 'support_click').length;
-  $('vTotal').firstChild.textContent = a.length;
-  $('vToday').firstChild.textContent = today;
-  $('vSupport').firstChild.textContent = support;
-  $('analyticsSummary').innerHTML = '<p>Showing the latest ' + a.length + ' activity records.</p>';
-  $('visitorTable').innerHTML = a.map(x => { const place = [x.city, x.region, x.country].filter(Boolean).join(', ') || 'Location unavailable'; return `<div class="event"><b>${esc(x.event_type === 'support_click' ? 'Support click' : 'Page visit')}</b><small>${esc(formatAdminDate(x.created_at))} · ${esc(x.page_path || '/')} · ${esc(x.target || '')}</small><small>Location: ${esc(place)}${x.timezone ? ' · ' + esc(x.timezone) : ''}</small><small>Session: ${esc((x.session_id || '').slice(0,8))} · Referrer: ${esc(x.referrer || 'Direct')}</small></div>`; }).join('') || '<p>No visitor activity yet.</p>';
+
+  if ($('vTotal')) $('vTotal').firstChild.textContent = a.length;
+  if ($('vToday')) $('vToday').firstChild.textContent = today;
+  if ($('vSupport')) $('vSupport').firstChild.textContent = support;
+
+  summary.innerHTML = '<p>Showing the latest ' + a.length + ' activity records.</p>';
+  table.innerHTML = a.map(x => {
+    const place = [x.city, x.region, x.country].filter(Boolean).join(', ') || 'Location unavailable';
+    return `<div class="event visitor-event">
+      <div><b>${esc(x.event_type === 'support_click' ? 'Support click' : 'Page visit')}</b>
+      <small>${esc(formatAdminDate(x.created_at))} · ${esc(x.page_path || '/')} · ${esc(x.target || '')}</small>
+      <small>Location: ${esc(place)}${x.timezone ? ' · ' + esc(x.timezone) : ''}</small>
+      <small>Session: ${esc((x.session_id || '').slice(0,8))} · Referrer: ${esc(x.referrer || 'Direct')}</small></div>
+      <button type="button" class="danger visitor-delete" onclick="deleteVisit('${esc(x.id)}')">Delete</button>
+    </div>`;
+  }).join('') || '<p>No visitor activity yet.</p>';
 }
-function formatAdminDate(v) { const d = new Date(v); return Number.isNaN(d.getTime()) ? String(v || '') : d.toLocaleString(); }
+
+function formatAdminDate(v) {
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? String(v || '') : d.toLocaleString();
+}
+
+async function refreshDashboard() {
+  const btn = $('refreshAnalytics');
+  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing...'; }
+  try {
+    await render();
+    await renderAnalytics();
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Refresh'; }
+  }
+}
+
+window.deleteVisit = async id => {
+  if (!id || !confirm('Delete this visitor activity record?')) return;
+  if (!await getAdminSession()) return showError('Please sign in again.');
+  const { error } = await db.from('page_visits').delete().eq('id', id);
+  if (error) return showError('Could not delete visitor record: ' + error.message);
+  await renderAnalytics();
+};
 
 async function render() {
   const { data: rows, error } = await db.from('shipments').select('*').order('created_at', {ascending:false});
@@ -51,8 +97,8 @@ async function render() {
   $('sDelayed').firstChild.textContent = a.filter(x => x.status === 'Delayed').length;
   $('table').innerHTML = a.filter(x => JSON.stringify(x).toLowerCase().includes(q)).map(x => `<div class="shipment"><div><b>${esc(x.tracking_number)}</b><small>${esc(x.current_location || '')}</small></div><div>${esc(x.status)}</div><div>${esc(x.estimated_delivery || '')}</div><div class="shipment-message">${esc(x.message || '')}</div></div><button class="danger" onclick="delShipment('${x.id}')">Delete</button></div>`).join('') || '<p>No shipments found.</p>';
 }
-$('adminSearch').oninput = render;
-$('refreshAnalytics').onclick = renderAnalytics;
+if ($('adminSearch')) $('adminSearch').oninput = render;
+if ($('refreshAnalytics')) $('refreshAnalytics').addEventListener('click', refreshDashboard);
 function parseEventDate(value) { if (!value) return new Date().toISOString(); const d = new Date(value); return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString(); }
 async function saveShipment() {
   const tracking = $('fTracking').value.trim().toUpperCase();
