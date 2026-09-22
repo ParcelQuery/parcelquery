@@ -36,7 +36,7 @@ async function renderAnalytics() {
   $('vToday').firstChild.textContent = today;
   $('vSupport').firstChild.textContent = support;
   $('analyticsSummary').innerHTML = '<p>Showing the latest ' + a.length + ' activity records.</p>';
-  $('visitorTable').innerHTML = a.map(x => `<div class="event"><b>${esc(x.event_type === 'support_click' ? 'Support click' : 'Page visit')}</b><small>${esc(formatAdminDate(x.created_at))} · ${esc(x.page_path || '/')} · ${esc(x.target || '')}</small><small>Session: ${esc((x.session_id || '').slice(0,8))} · Referrer: ${esc(x.referrer || 'Direct')}</small></div>`).join('') || '<p>No visitor activity yet.</p>';
+  $('visitorTable').innerHTML = a.map(x => { const place = [x.city, x.region, x.country].filter(Boolean).join(', ') || 'Location unavailable'; return `<div class="event"><b>${esc(x.event_type === 'support_click' ? 'Support click' : 'Page visit')}</b><small>${esc(formatAdminDate(x.created_at))} · ${esc(x.page_path || '/')} · ${esc(x.target || '')}</small><small>Location: ${esc(place)}${x.timezone ? ' · ' + esc(x.timezone) : ''}</small><small>Session: ${esc((x.session_id || '').slice(0,8))} · Referrer: ${esc(x.referrer || 'Direct')}</small></div>`; }).join('') || '<p>No visitor activity yet.</p>';
 }
 function formatAdminDate(v) { const d = new Date(v); return Number.isNaN(d.getTime()) ? String(v || '') : d.toLocaleString(); }
 
